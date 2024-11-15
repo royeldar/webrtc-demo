@@ -79,4 +79,42 @@
 		return remoteUsernameInput.value;
 	}
 
+	// Send a message to the remote user
+	async function sendMessage(msg) {
+		const url = window.location.origin + '/api/send';
+		const headers = new Headers();
+		headers.append('Content-Type', 'text/plain; charset=utf-8');
+		const username = getRemoteUsername();
+		const body = username + '\n' + JSON.stringify(msg);
+		const response = await fetch(url, {
+			method: 'POST',
+			body: body,
+			headers: headers
+		});
+		if (!response.ok) {
+			throw new Error('Failed to send message!');
+		}
+	}
+
+	// Receive a message intended for the local user
+	async function receiveMessage() {
+		const url = window.location.origin + '/api/receive';
+		const headers = new Headers();
+		headers.append('Content-Type', 'text/plain; charset=utf-8');
+		const username = getLocalUsername();
+		const response = await fetch(url, {
+			method: 'POST',
+			body: username,
+			headers: headers
+		});
+		if (!response.ok) {
+			throw new Error('Failed to receive message!');
+		}
+		msg = await response.text();
+		if (msg === '') {
+			return null;
+		}
+		return JSON.parse(msg);
+	}
+
 })();
