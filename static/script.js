@@ -219,6 +219,9 @@
 			}
 			theirId = msg.callerId;
 
+			// Set call status accordingly
+			setCallStatus('CONNECTING');
+
 			// Send call answer to the other user
 			await sendCallAnswerMessage();
 		}
@@ -255,6 +258,9 @@
 			// Construct session id
 			createSessionId();
 
+			// Set call status accordingly
+			setCallStatus('CONNECTED');
+
 			// Create a peer connection
 			createPeerConnection();
 
@@ -288,6 +294,9 @@
 			// Construct session id
 			createSessionId();
 
+			// Set call status accordingly
+			setCallStatus('CONNECTED');
+
 			// Create a peer connection
 			createPeerConnection();
 		}
@@ -320,7 +329,24 @@
 			sessionId = null;
 			ourId = null;
 			theirId = null;
+
+			// Set call status accordingly
+			switch (side) {
+			case 'caller':
+				setCallStatus('DISCONNECTED');
+				break;
+			case 'callee':
+				setCallStatus('WAITING');
+				break;
+			}
 		}
+	}
+
+	// Change call status
+	const callStatusOutput = document.querySelector('output#callStatus');
+	function setCallStatus(status) {
+		console.log(`Setting call status to ${status}`);
+		callStatusOutput.value = status;
 	}
 
 	// Define a button for initiating a call
@@ -343,6 +369,9 @@
 			initiateCallButton.disabled = true;
 			receiveCallButton.disabled = true;
 			endCallButton.disabled = false;
+
+			// Set call status accordingly
+			setCallStatus('CONNECTING');
 
 			// The side that initiates the call is the caller
 			side = 'caller';
@@ -376,6 +405,9 @@
 			receiveCallButton.disabled = true;
 			endCallButton.disabled = false;
 
+			// Set call status accordingly
+			setCallStatus('WAITING');
+
 			// The side that answers the call is the callee
 			side = 'callee';
 
@@ -406,6 +438,9 @@
 		side = null;
 		ourId = null;
 		theirId = null;
+
+		// Set call status accordingly
+		setCallStatus('DISCONNECTED');
 
 		// Enable and disable some elements
 		localUsernameInput.disabled = false;
