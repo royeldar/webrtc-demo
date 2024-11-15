@@ -11,7 +11,10 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory='static', **kwargs)
 
     def do_GET(self):
-        if self.path in ['/', '/index.html']:
+        path = self.path
+        path = path.split('?',1)[0]
+        path = path.split('#',1)[0]
+        if path in ['/', '/index.html']:
             super().do_GET()
         else:
             self.send_error(HTTPStatus.NOT_FOUND, 'File not found')
