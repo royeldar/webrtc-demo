@@ -14,7 +14,7 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
         path = self.path
         path = path.split('?',1)[0]
         path = path.split('#',1)[0]
-        if path in ['/', '/index.html']:
+        if path in ['/', '/index.html', '/styles.css']:
             super().do_GET()
         else:
             self.send_error(HTTPStatus.NOT_FOUND, 'File not found')
