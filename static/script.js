@@ -73,4 +73,10 @@
 		}
 	});
 
+	// Get the remote username
+	const remoteUsernameInput = document.querySelector('input#remoteUsername');
+	function getRemoteUsername() {
+		return remoteUsernameInput.value;
+	}
+
 })();
