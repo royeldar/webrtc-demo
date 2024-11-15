@@ -19,6 +19,9 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
         else:
             self.send_error(HTTPStatus.NOT_FOUND, 'File not found')
 
+    def log_message(self, format, *args):
+        pass
+
 
 def run(server_class=ThreadingHTTPServer, handler_class=MyHTTPRequestHandler):
     server_address = (ADDRESS, PORT)
