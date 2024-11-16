@@ -106,6 +106,13 @@
 		await setInputDevices(newCameraId, newMicrophoneId);
 	});
 
+	// Change remote video stream
+	function setRemoteStream(stream) {
+		// Play video from remote camera
+		const remoteVideo = document.querySelector('video#remoteVideo');
+		remoteVideo.srcObject = stream;
+	}
+
 	let localUsername = null;
 
 	// Change local username
