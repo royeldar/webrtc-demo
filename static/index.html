@@ -6,6 +6,16 @@
 	<script src="script.js" defer></script>
 </head>
 <body>
+	<label for="availableCameras">Choose a camera: </label>
+	<select name="availableCameras" id="availableCameras">
+		<option value="">--Please choose an input video device--</option>
+	</select>
+	<label for="availableMicrophones">Choose a microphone: </label>
+	<select name="availableMicrophones" id="availableMicrophones">
+		<option value="">--Please choose an input audio device--</option>
+	</select>
+	<button type="button" id="setInputDevices">Set input devices</button>
+	<br/>
 	<label for="localUsername">Our username: </label>
 	<input type="text" id="localUsername" name="localUsername"/>
 	<button type="button" id="setUsername">Set username</button>

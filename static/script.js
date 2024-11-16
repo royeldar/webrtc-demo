@@ -1,5 +1,80 @@
 (async () => {
 
+	// Trigger a permissions request
+	await navigator.mediaDevices.getUserMedia({'video': true, 'audio': true});
+
+	// Fetch an array of devices of a certain type
+	async function getConnectedDevices(type) {
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		return devices.filter(device => device.kind === type)
+	}
+
+	// Updates the select element with the provided set of cameras
+	function updateCameraList(cameras) {
+		const listElement = document.querySelector('select#availableCameras');
+		listElement.innerHTML = '<option value="">--Please choose an input video device--</option>';
+		cameras.map((camera) => {
+			const cameraOption = document.createElement('option');
+			cameraOption.label = camera.label;
+			cameraOption.value = camera.deviceId;
+			return cameraOption;
+		}).forEach(cameraOption => listElement.add(cameraOption));
+	}
+
+	// Updates the select element with the provided set of microphones
+	function updateMicrophoneList(microphones) {
+		const listElement = document.querySelector('select#availableMicrophones');
+		listElement.innerHTML = '<option value="">--Please choose an input audio device--</option>';
+		microphones.map((microphone) => {
+			const microphoneOption = document.createElement('option');
+			microphoneOption.label = microphone.label;
+			microphoneOption.value = microphone.deviceId;
+			return microphoneOption;
+		}).forEach(microphoneOption => listElement.add(microphoneOption));
+	}
+
+	// Get the initial set of cameras connected
+	const videoCameras = await getConnectedDevices('videoinput');
+	console.log('Cameras found:', videoCameras);
+
+	// Get the initial set of microphones connected
+	const audioMicrophones = await getConnectedDevices('audioinput');
+	console.log('Microphones found:', audioMicrophones);
+
+	// Initialize the camera list
+	updateCameraList(videoCameras);
+
+	// Initialize the microphone list
+	updateMicrophoneList(audioMicrophones)
+
+	// Listen for changes to media devices and update the lists accordingly
+	navigator.mediaDevices.addEventListener('devicechange', async (event) => {
+		const newCameraList = await getConnectedDevices('videoinput');
+		const newMicrophoneList = await getConnectedDevices('audioinput');
+		updateCameraList(newCameraList);
+		updateMicrophoneList(newMicrophoneList);
+	});
+
+	let cameraId = null;
+	let microphoneId = null;
+
+	// Change input devices and re-open stream if needed
+	async function setInputDevices(newCameraId, newMicrophoneId) {
+		if (cameraId !== newCameraId || microphoneId !== newMicrophoneId) {
+			cameraId = newCameraId;
+			microphoneId = newMicrophoneId;
+			console.log(`Changing input devices (video = ${cameraId}, audio = ${microphoneId})`);
+		}
+	}
+
+	// Define a button for setting the input devices
+	const setInputDevicesButton = document.querySelector('button#setInputDevices');
+	setInputDevicesButton.addEventListener('click', async (event) => {
+		const newCameraId = document.querySelector('select#availableCameras').value;
+		const newMicrophoneId = document.querySelector('select#availableMicrophones').value;
+		await setInputDevices(newCameraId, newMicrophoneId);
+	});
+
 	let localUsername = null;
 
 	// Change local username
