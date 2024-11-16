@@ -78,6 +78,20 @@
 	let cameraId = null;
 	let microphoneId = null;
 	let localStream = null;
+	let attachedStream = null;
+
+	// Attach the local stream to the connection (this may trigger negotiation)
+	function attachStream() {
+		// Remove the old tracks from the connection (if there are any)
+		if (attachedStream) {
+			peerConnection.getSenders()
+				.forEach((sender) => peerConnection.removeTrack(sender));
+		}
+		// Add the local stream tracks to the connection
+		localStream.getTracks()
+			.forEach((track) => peerConnection.addTrack(track, localStream));
+		attachedStream = true;
+	}
 
 	// Change local video stream
 	async function setLocalStream() {
@@ -86,6 +100,10 @@
 		// Play video from local camera
 		const localVideo = document.querySelector('video#localVideo');
 		localVideo.srcObject = localStream;
+		// If there is an ongoing call, change its media stream
+		if (peerConnection !== null) {
+			attachStream();
+		}
 	}
 
 	// Change input devices and re-open stream if needed
@@ -278,6 +296,15 @@
 		case 'call-hangup':
 			await handleCallHangupMessage(msg);
 			break;
+		case 'video-offer':
+			await handleVideoOfferMessage(msg);
+			break;
+		case 'video-answer':
+			await handleVideoAnswerMessage(msg);
+			break;
+		case 'new-ice-candidate':
+			await handleNewICECandidateMessage(msg);
+			break;
 		default:
 			console.warn(`Unknown message type (${msg.type})`);
 		}
@@ -412,6 +439,90 @@
 
 			// Create a peer connection
 			createPeerConnection();
+
+			// Attach stream (this will start negotiation)
+			attachStream();
+		}
+	}
+
+	// Send a video offer message
+	async function sendVideoOfferMessage() {
+		console.log('Sending a video offer');
+
+		await sendMessage({
+			name: localUsername,
+			type: 'video-offer',
+			sessionId: sessionId,
+			description: peerConnection.localDescription
+		});
+	}
+
+	// Handle a video offer message
+	async function handleVideoOfferMessage(msg) {
+		console.log('Got a video offer');
+
+		if (peerConnection === null) {
+			console.warn('Got a video offer without an ongoing call');
+		} else if (msg.sessionId !== sessionId) {
+			console.warn('Incorrect session id');
+		} else {
+			await peerConnection.setRemoteDescription(msg.description);
+			if (!attachedStream) {
+				attachStream();
+			}
+			const answer = await peerConnection.createAnswer();
+			await peerConnection.setLocalDescription(answer);
+			await sendVideoAnswerMessage();
+		}
+	}
+
+	// Send a video answer message
+	async function sendVideoAnswerMessage() {
+		console.log('Sending a video answer');
+
+		await sendMessage({
+			name: localUsername,
+			type: 'video-answer',
+			sessionId: sessionId,
+			description: peerConnection.localDescription
+		});
+	}
+
+	// Handle a video answer message
+	async function handleVideoAnswerMessage(msg) {
+		console.log('Got a video answer');
+
+		if (peerConnection === null) {
+			console.warn('Got a video answer without an ongoing call');
+		} else if (msg.sessionId !== sessionId) {
+			console.warn('Incorrect session id');
+		} else {
+			await peerConnection.setRemoteDescription(msg.description);
+		}
+	}
+
+	// Send a new ice candidate message
+	async function sendNewICECandidateMessage(candidate) {
+		console.log('Sending a new ice candidate');
+
+		await sendMessage({
+			name: localUsername,
+			type: 'new-ice-candidate',
+			sessionId: sessionId,
+			candidate: candidate
+		});
+	}
+
+	// Handle a new ice candidate message
+	async function handleNewICECandidateMessage(msg) {
+		console.log('Got a new ice candidate');
+
+		if (peerConnection === null) {
+			console.warn('Got a new ice candidate without an ongoing call');
+		} else if (msg.sessionId !== sessionId) {
+			console.warn('Incorrect session id');
+		} else {
+			await peerConnection.addIceCandidate(msg.candidate);
 		}
 	}
 
@@ -437,6 +548,9 @@
 		} else {
 			// Destroy the peer connection
 			destroyPeerConnection();
+
+			// Reset remote video stream
+			setRemoteStream(null);
 
 			// There is no session anymore
 			sessionId = null;
@@ -472,6 +586,8 @@
 			alert('Their username is not set');
 		} else if (localUsername === remoteUsername) {
 			alert('Cannot start a call with ourselves');
+		} else if (localStream === null) {
+			alert('Media sources are not set');
 		} else {
 			// Disable and enable some elements
 			localUsernameInput.disabled = true;
@@ -507,6 +623,8 @@
 			alert('Their username is not set');
 		} else if (localUsername === remoteUsername) {
 			alert('Cannot start a call with ourselves');
+		} else if (localStream === null) {
+			alert('Media sources are not set');
 		} else {
 			// Disable and enable some elements
 			localUsernameInput.disabled = true;
@@ -536,6 +654,9 @@
 		if (peerConnection !== null) {
 			// Destroy the peer connection
 			destroyPeerConnection();
+
+			// Reset remote video stream
+			setRemoteStream(null);
 
 			// Send call hangup to the other user
 			await sendCallHangupMessage();
@@ -572,15 +693,54 @@
 	function createPeerConnection() {
 		console.log('Creating an RTC peer connection');
 
+		attachedStream = false;
+
 		peerConnection = new RTCPeerConnection();
+
+		peerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
+		peerConnection.onicecandidate = handleICECandidateEvent;
+		peerConnection.ontrack = handleTrackEvent;
 	}
 
 	// Destroy the RTC peer connection
 	function destroyPeerConnection() {
 		console.log('Destroying the peer connection');
 
+		peerConnection.onnegotiationneeded = null;
+		peerConnection.onicecandidate = null;
+		peerConnection.ontrack = null;
+
 		peerConnection.close();
 		peerConnection = null;
+
+		attachedStream = null;
+	}
+
+	// Handle negotiationneeded event
+	async function handleNegotiationNeededEvent(event) {
+		console.log('Got a negotiationneeded event');
+
+		const offer = await peerConnection.createOffer();
+		await peerConnection.setLocalDescription(offer);
+		await sendVideoOfferMessage();
+	}
+
+	// Handle icecandidate event
+	async function handleICECandidateEvent(event) {
+		console.log('Got an icecandidate event');
+
+		// Send new ice candidate (if there is one)
+		if (event.candidate) {
+			await sendNewICECandidateMessage(event.candidate);
+		}
+	}
+
+	// Handle track event
+	async function handleTrackEvent(event) {
+		console.log('Got a track event');
+
+		// Set remote video stream
+		setRemoteStream(event.streams[0]);
 	}
 
 })();
