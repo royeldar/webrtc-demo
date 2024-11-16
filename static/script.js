@@ -55,8 +55,38 @@
 		updateMicrophoneList(newMicrophoneList);
 	});
 
+	// Open a stream with a specific camera and microphone
+	async function openStream(cameraId, microphoneId) {
+		let constraints = new Object();
+		if (cameraId !== '') {
+			constraints.video = {
+				deviceId: {
+					exact: cameraId,
+				},
+			}
+		}
+		if (microphoneId !== '') {
+			constraints.audio = {
+				deviceId: {
+					exact: microphoneId,
+				},
+			}
+		}
+		return await navigator.mediaDevices.getUserMedia(constraints);
+	}
+
 	let cameraId = null;
 	let microphoneId = null;
+	let localStream = null;
+
+	// Change local video stream
+	async function setLocalStream() {
+		// Create local video stream
+		localStream = await openStream(cameraId, microphoneId);
+		// Play video from local camera
+		const localVideo = document.querySelector('video#localVideo');
+		localVideo.srcObject = localStream;
+	}
 
 	// Change input devices and re-open stream if needed
 	async function setInputDevices(newCameraId, newMicrophoneId) {
@@ -64,6 +94,7 @@
 			cameraId = newCameraId;
 			microphoneId = newMicrophoneId;
 			console.log(`Changing input devices (video = ${cameraId}, audio = ${microphoneId})`);
+			await setLocalStream();
 		}
 	}
 
