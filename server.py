@@ -32,56 +32,74 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
             if b'\n' in username:
                 self.send_error(HTTPStatus.BAD_REQUEST, 'Username is invalid')
                 return
+            error = False
             with lock:
                 if username in usernames:
-                    self.send_error(HTTPStatus.CONFLICT, 'Username already exists')
-                    return
-                usernames[username] = Queue()
-            self.send_response(HTTPStatus.OK)
-            self.end_headers()
+                    error = True
+                else:
+                    usernames[username] = Queue()
+            if error:
+                self.send_error(HTTPStatus.CONFLICT, 'Username already exists')
+            else:
+                self.send_response(HTTPStatus.OK)
+                self.end_headers()
         elif self.path == '/api/unregister':
             length = int(self.headers.get('content-length'))
             username = self.rfile.read(length).strip()
+            error = False
             with lock:
                 if username not in usernames:
-                    self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist')
-                    return
-                del usernames[username]
-            self.send_response(HTTPStatus.OK)
-            self.end_headers()
+                    error = True
+                else:
+                    del usernames[username]
+            if error:
+                self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist')
+            else:
+                self.send_response(HTTPStatus.OK)
+                self.end_headers()
         elif self.path == '/api/send':
             length = int(self.headers.get('content-length'))
             username, data = self.rfile.read(length).split(b'\n', 1)
             username = username.strip()
             data = data.strip()
+            error = False
             with lock:
                 if username not in usernames:
-                    self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist')
-                    return
-                usernames[username].put(data)
-            self.send_response(HTTPStatus.OK)
-            self.end_headers()
+                    error = True
+                else:
+                    usernames[username].put(data)
+            if error:
+                self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist')
+            else:
+                self.send_response(HTTPStatus.OK)
+                self.end_headers()
         elif self.path == '/api/receive':
             length = int(self.headers.get('content-length'))
             username = self.rfile.read(length).strip()
+            error = False
             with lock:
                 if username not in usernames:
-                    self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist')
-                    return
-                try:
-                    data = usernames[username].get_nowait()
-                    f = BytesIO()
-                    f.write(data)
-                    f.seek(0)
-                    self.send_response(HTTPStatus.OK)
-                    self.send_header('Content-Length', str(len(data)))
-                    self.send_header('Content-Type', 'text/plain; charset=utf-8')
-                    self.end_headers()
-                    self.copyfile(f, self.wfile)
-                    f.close()
-                except Empty:
-                    self.send_response(HTTPStatus.NO_CONTENT)
-                    self.end_headers()
+                    error = True
+                else:
+                    try:
+                       data = usernames[username].get_nowait()
+                    except Empty:
+                        data = None
+            if error:
+                self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist')
+            elif data is None:
+                self.send_response(HTTPStatus.NO_CONTENT)
+                self.end_headers()
+            else:
+                f = BytesIO()
+                f.write(data)
+                f.seek(0)
+                self.send_response(HTTPStatus.OK)
+                self.send_header('Content-Length', str(len(data)))
+                self.send_header('Content-Type', 'text/plain; charset=utf-8')
+                self.end_headers()
+                self.copyfile(f, self.wfile)
+                f.close()
 
     def log_message(self, format, *args):
         pass
