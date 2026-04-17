@@ -217,8 +217,9 @@
 		const url = window.location.origin + '/api/send';
 		const headers = new Headers();
 		headers.append('Content-Type', 'text/plain; charset=utf-8');
-		const username = getRemoteUsername();
-		const body = username + '\n' + JSON.stringify(msg);
+		const sender = localUsername;
+		const receiver = getRemoteUsername();
+		const body = sender + '\n' + receiver + '\n' + JSON.stringify(msg);
 		const response = await fetch(url, {
 			method: 'POST',
 			body: body,
@@ -234,10 +235,12 @@
 		const url = window.location.origin + '/api/receive';
 		const headers = new Headers();
 		headers.append('Content-Type', 'text/plain; charset=utf-8');
-		const username = localUsername;
+		const receiver = localUsername;
+		const sender = getRemoteUsername();
+		const body = receiver + '\n' + sender;
 		const response = await fetch(url, {
 			method: 'POST',
-			body: username,
+			body: body,
 			headers: headers
 		});
 		if (!response.ok) {
@@ -280,11 +283,6 @@
 
 	// Handle a single message that was received
 	async function handleMessage(msg) {
-		const remoteUsername = getRemoteUsername();
-		if (msg.name !== remoteUsername) {
-			console.warn(`Mismatching username (${msg.name})`);
-			return;
-		}
 		switch (msg.type) {
 		case 'call-offer':
 			await handleCallOfferMessage(msg);
@@ -341,7 +339,6 @@
 
 		ourId = generateUniqueId();
 		await sendMessage({
-			name: localUsername,
 			type: 'call-offer',
 			callerId: ourId
 		});
@@ -375,7 +372,6 @@
 
 		ourId = generateUniqueId();
 		await sendMessage({
-			name: localUsername,
 			type: 'call-answer',
 			callerId: theirId,
 			calleeId: ourId
@@ -416,7 +412,6 @@
 		console.log('Sending a call acknowledgement');
 
 		await sendMessage({
-			name: localUsername,
 			type: 'call-acknowledgement',
 			calleeId: theirId
 		});
@@ -452,7 +447,6 @@
 		console.log('Sending a video offer');
 
 		await sendMessage({
-			name: localUsername,
 			type: 'video-offer',
 			sessionId: sessionId,
 			description: peerConnection.localDescription
@@ -483,7 +477,6 @@
 		console.log('Sending a video answer');
 
 		await sendMessage({
-			name: localUsername,
 			type: 'video-answer',
 			sessionId: sessionId,
 			description: peerConnection.localDescription
@@ -508,7 +501,6 @@
 		console.log('Sending a new ice candidate');
 
 		await sendMessage({
-			name: localUsername,
 			type: 'new-ice-candidate',
 			sessionId: sessionId,
 			candidate: candidate
@@ -533,7 +525,6 @@
 		console.log('Sending a call hangup');
 
 		await sendMessage({
-			name: localUsername,
 			type: 'call-hangup',
 			sessionId: sessionId
 		});

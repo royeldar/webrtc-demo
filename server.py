@@ -5,6 +5,7 @@ from http import HTTPStatus
 from threading import Lock
 from queue import Queue, Empty
 from io import BytesIO
+from collections import defaultdict
 
 ADDRESS = 'localhost'
 PORT = 80
@@ -37,7 +38,7 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
                 if username in usernames:
                     error = True
                 else:
-                    usernames[username] = Queue()
+                    usernames[username] = defaultdict(Queue)
             if error:
                 self.send_error(HTTPStatus.CONFLICT, 'Username already exists')
             else:
@@ -59,15 +60,16 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
                 self.end_headers()
         elif self.path == '/api/send':
             length = int(self.headers.get('content-length'))
-            username, data = self.rfile.read(length).split(b'\n', 1)
-            username = username.strip()
+            sender, receiver, data = self.rfile.read(length).split(b'\n', 2)
+            sender = sender.strip()
+            receiver = receiver.strip()
             data = data.strip()
             error = False
             with lock:
-                if username not in usernames:
+                if receiver not in usernames:
                     error = True
                 else:
-                    usernames[username].put(data)
+                    usernames[receiver][sender].put(data)
             if error:
                 self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist')
             else:
@@ -75,14 +77,16 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
                 self.end_headers()
         elif self.path == '/api/receive':
             length = int(self.headers.get('content-length'))
-            username = self.rfile.read(length).strip()
+            receiver, sender = self.rfile.read(length).split(b'\n')
+            receiver = receiver.strip()
+            sender = sender.strip()
             error = False
             with lock:
-                if username not in usernames:
+                if receiver not in usernames:
                     error = True
                 else:
                     try:
-                       data = usernames[username].get_nowait()
+                       data = usernames[receiver][sender].get_nowait()
                     except Empty:
                         data = None
             if error:
