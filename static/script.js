@@ -234,7 +234,7 @@
 		const url = window.location.origin + '/api/receive';
 		const headers = new Headers();
 		headers.append('Content-Type', 'text/plain; charset=utf-8');
-		const username = getLocalUsername();
+		const username = localUsername;
 		const response = await fetch(url, {
 			method: 'POST',
 			body: username,
