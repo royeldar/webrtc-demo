@@ -255,7 +255,7 @@
 
 	let pollingId = null;
 
-	// Handle messages by polling the server until there is an error
+	// Handle messages by polling the server until there is none
 	async function pollServer() {
 		while ((msg = await receiveMessage()) !== null) {
 			try {
