@@ -6,9 +6,7 @@ from threading import Lock
 from queue import Queue, Empty
 from io import BytesIO
 from collections import defaultdict
-
-ADDRESS = 'localhost'
-PORT = 80
+import argparse
 
 usernames = {}
 lock = Lock()
@@ -112,8 +110,8 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
         pass
 
 
-def run(server_class=ThreadingHTTPServer, handler_class=MyHTTPRequestHandler):
-    server_address = (ADDRESS, PORT)
+def run(address, port, server_class=ThreadingHTTPServer, handler_class=MyHTTPRequestHandler):
+    server_address = (address, port)
     # TODO listen on ipv6 as well
     httpd = server_class(server_address, handler_class)
     try:
@@ -122,5 +120,13 @@ def run(server_class=ThreadingHTTPServer, handler_class=MyHTTPRequestHandler):
         print('\nKeyboard interrupt received, exiting.')
 
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--address', default='localhost')
+    parser.add_argument('--port', type=int, default=80)
+    args = parser.parse_args()
+    run(address=args.address, port=args.port)
+
+
 if __name__ == '__main__':
-    run()
+    main()
