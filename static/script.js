@@ -739,8 +739,8 @@
 
 		const stunPort = document.getElementById('stunPort').value || '3478';
 		const turnPort = document.getElementById('turnPort').value || '3478';
-		const turnUsername = document.getElementById('turnUsername').value;
-		const turnPassword = document.getElementById('turnPassword').value;
+		const turnUsername = document.getElementById('turnUsername').value || 'username';
+		const turnPassword = document.getElementById('turnPassword').value || 'password';
 		const config = {
 			iceServers: [
 				{
