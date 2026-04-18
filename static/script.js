@@ -253,32 +253,47 @@
 		return JSON.parse(msg);
 	}
 
-	let pollingId = null;
+	// 100ms
+	const pollingInterval = 100;
+	let isPolling = null;
+	let pollingPromise = null;
 
-	// Handle messages by polling the server until there is none
+	// Delay some amount of time
+	async function delay(ms) {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	// Handle messages by polling the server indefinitely
 	async function pollServer() {
-		while ((msg = await receiveMessage()) !== null) {
+		while (isPolling) {
 			try {
-				await handleMessage(msg);
+				let msg;
+				while (isPolling && (msg = await receiveMessage()) !== null) {
+					await handleMessage(msg).catch(console.error);
+				}
 			} catch (e) {
-				console.error(e)
+				console.error(e);
+			}
+			if (isPolling) {
+				await delay(pollingInterval);
 			}
 		}
 	}
 
-	// 100ms
-	const pollingInterval = 100;
-
 	// Start polling server
 	function startPolling() {
 		console.log('Starting to poll server');
-		pollingId = setInterval(pollServer, pollingInterval);
+		isPolling = true;
+		pollingPromise = pollServer();
 	}
 
 	// Stop polling server
-	function stopPolling() {
+	async function stopPolling() {
 		console.log('Stopping polling server');
-		clearInterval(pollingId);
+		isPolling = false;
+		await pollingPromise;
+		isPolling = null;
+		pollingPromise = null;
 	}
 
 	// Handle a single message that was received
@@ -659,7 +674,7 @@
 		}
 
 		// Stop receiving messages intended for our user
-		stopPolling();
+		await stopPolling();
 
 		// There is no side anymore
 		side = null;
