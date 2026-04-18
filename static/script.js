@@ -246,7 +246,7 @@
 		if (!response.ok) {
 			throw new Error('Failed to receive message!');
 		}
-		msg = await response.text();
+		const msg = await response.text();
 		if (msg === '') {
 			return null;
 		}
