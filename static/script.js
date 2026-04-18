@@ -486,7 +486,9 @@
 				console.log('Ignoring video offer');
 				return;
 			}
+			isRemoteDescriptionSet = false;
 			await peerConnection.setRemoteDescription(msg.description);
+			isRemoteDescriptionSet = true;
 			for (const candidate of iceCandidatesQueue) {
 				await peerConnection.addIceCandidate(candidate).catch(console.error);
 			}
@@ -520,7 +522,9 @@
 		} else if (msg.sessionId !== sessionId) {
 			console.warn('Incorrect session id');
 		} else {
+			isRemoteDescriptionSet = false;
 			await peerConnection.setRemoteDescription(msg.description);
+			isRemoteDescriptionSet = true;
 			for (const candidate of iceCandidatesQueue) {
 				await peerConnection.addIceCandidate(candidate).catch(console.error);
 			}
@@ -547,9 +551,11 @@
 			console.warn('Got a new ice candidate without an ongoing call');
 		} else if (msg.sessionId !== sessionId) {
 			console.warn('Incorrect session id');
-		} else if (peerConnection.remoteDescription === null && iceCandidatesQueue !== null) {
-			console.log('Got a new ice candidate before video offer/answer');
-			iceCandidatesQueue.push(msg.candidate);
+		} else if (!isRemoteDescriptionSet) {
+			if (iceCandidatesQueue !== null) {
+				console.log('Got a new ice candidate before video offer/answer');
+				iceCandidatesQueue.push(msg.candidate);
+			}
 		} else {
 			try {
 				await peerConnection.addIceCandidate(msg.candidate);
@@ -723,6 +729,7 @@
 
 	let peerConnection = null;
 	let iceCandidatesQueue = null;
+	let isRemoteDescriptionSet = null;
 
 	// Create an RTC peer connection
 	function createPeerConnection() {
@@ -737,6 +744,7 @@
 		peerConnection.ontrack = handleTrackEvent;
 
 		iceCandidatesQueue = [];
+		isRemoteDescriptionSet = false;
 	}
 
 	// Destroy the RTC peer connection
@@ -744,6 +752,7 @@
 		console.log('Destroying the peer connection');
 
 		iceCandidatesQueue = null;
+		isRemoteDescriptionSet = null;
 
 		peerConnection.onnegotiationneeded = null;
 		peerConnection.onicecandidate = null;
