@@ -53,6 +53,9 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
                     error = True
                 else:
                     del usernames[username]
+                    for username2 in usernames:
+                        if username in usernames[username2]:
+                            del usernames[username2][username]
             if error:
                 self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist')
             else:
