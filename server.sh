@@ -1,9 +1,10 @@
 #!/bin/bash
 
-PORT="${TURN_PORT:-3478}"
-REALM="${TURN_REALM:-localhost}"
-USERNAME="${TURN_USERNAME:-username}"
-PASSWORD="${TURN_PASSWORD:-password}"
+: "${TURN_PORT:=3478}"
+: "${TURN_REALM:=localhost}"
+: "${TURN_USERNAME:=username}"
+: "${TURN_PASSWORD:=password}"
+: "${TURN_EXTRA_FLAGS:=}"
 
 cleanup() {
     kill $TURN_PID $PY_PID
@@ -12,7 +13,12 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
-turnserver --listening-port "$PORT" --lt-cred-mech --realm "$REALM" --user "$USERNAME:$PASSWORD" &
+turnserver \
+    --listening-port "$TURN_PORT" \
+    --realm "$TURN_REALM" \
+    --user "$TURN_USERNAME:$TURN_PASSWORD" \
+    --lt-cred-mech \
+    $TURN_EXTRA_FLAGS &
 TURN_PID=$!
 
 python3 server.py &
