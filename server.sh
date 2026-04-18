@@ -5,6 +5,8 @@
 : "${PY_PORT:=8080}"
 
 : "${TURN_PORT:=3478}"
+: "${TURN_MIN_PORT:=49152}"
+: "${TURN_MAX_PORT:=65535}"
 : "${TURN_REALM:=localhost}"
 : "${TURN_USERNAME:=username}"
 : "${TURN_PASSWORD:=password}"
@@ -28,6 +30,8 @@ turnserver \
     -n \
     --listening-ip "$IP_ADDRESS" \
     --listening-port "$TURN_PORT" \
+    --min-port "$TURN_MIN_PORT" \
+    --max-port "$TURN_MAX_PORT" \
     --realm "$TURN_REALM" \
     --user "$TURN_USERNAME:$TURN_PASSWORD" \
     --lt-cred-mech \
