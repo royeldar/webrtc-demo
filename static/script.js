@@ -737,7 +737,23 @@
 
 		attachedStream = false;
 
-		peerConnection = new RTCPeerConnection();
+		const stunPort = document.getElementById('stunPort').value || '3478';
+		const turnPort = document.getElementById('turnPort').value || '3478';
+		const turnUsername = document.getElementById('turnUsername').value;
+		const turnPassword = document.getElementById('turnPassword').value;
+		const config = {
+			iceServers: [
+				{
+					urls: 'stun:' + window.location.hostname + ':' + stunPort,
+				},
+				{
+					urls: 'turn:' + window.location.hostname + ':' + turnPort,
+					username: turnUsername,
+					credential: turnPassword,
+				},
+			]
+		}
+		peerConnection = new RTCPeerConnection(config);
 
 		peerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
 		peerConnection.onicecandidate = handleICECandidateEvent;
