@@ -345,14 +345,15 @@
 			sessionId = theirId + '_' + ourId;
 			break;
 		}
-		console.log(`Created session (id = ${sessionId})`);
+		console.log(`Created session (sessionId = ${sessionId})`);
 	}
 
 	// Send a call offer message
 	async function sendCallOfferMessage() {
-		console.log('Sending a call offer');
-
 		ourId = generateUniqueId();
+
+		console.log(`Sending a call offer (callerId = ${ourId})`);
+
 		await sendMessage({
 			type: 'call-offer',
 			callerId: ourId
@@ -361,7 +362,7 @@
 
 	// Handle a call offer message
 	async function handleCallOfferMessage(msg) {
-		console.log('Got a call offer');
+		console.log(`Got a call offer (callerId = ${msg.callerId})`);
 
 		if (side !== 'callee') {
 			console.warn(`Wrong side for call offer (${side})`);
@@ -383,9 +384,10 @@
 
 	// Send a call answer message
 	async function sendCallAnswerMessage() {
-		console.log('Sending a call answer');
-
 		ourId = generateUniqueId();
+
+		console.log(`Sending a call answer (callerId = ${theirId}, calleeId = ${ourId})`);
+
 		await sendMessage({
 			type: 'call-answer',
 			callerId: theirId,
@@ -395,7 +397,7 @@
 
 	// Handle a call answer message
 	async function handleCallAnswerMessage(msg) {
-		console.log('Got a call answer');
+		console.log(`Got a call answer (callerId = ${msg.callerId}, calleeId = ${msg.calleeId})`);
 
 		if (side !== 'caller') {
 			console.warn(`Wrong side for call answer (${side})`);
@@ -424,7 +426,7 @@
 
 	// Send a call acknowledgement message
 	async function sendCallAcknowledgementMessage() {
-		console.log('Sending a call acknowledgement');
+		console.log(`Sending a call acknowledgement (calleeId = ${theirId})`);
 
 		await sendMessage({
 			type: 'call-acknowledgement',
@@ -434,7 +436,7 @@
 
 	// Handle a call acknowledgement message
 	async function handleCallAcknowledgementMessage(msg) {
-		console.log('Got a call acknowledgement')
+		console.log(`Got a call acknowledgement (calleeId = ${msg.calleeId})`)
 
 		if (side !== 'callee') {
 			console.warn(`Wrong side for call acknowledgement (${side})`);
@@ -459,7 +461,7 @@
 
 	// Send a video offer message
 	async function sendVideoOfferMessage() {
-		console.log('Sending a video offer');
+		console.log(`Sending a video offer (sessionId = ${sessionId}, description = %o)`, peerConnection.localDescription);
 
 		await sendMessage({
 			type: 'video-offer',
@@ -472,7 +474,7 @@
 
 	// Handle a video offer message
 	async function handleVideoOfferMessage(msg) {
-		console.log('Got a video offer');
+		console.log(`Got a video offer (sessionId = ${msg.sessionId}, description = %o)`, msg.description);
 
 		if (peerConnection === null) {
 			console.warn('Got a video offer without an ongoing call');
@@ -504,7 +506,7 @@
 
 	// Send a video answer message
 	async function sendVideoAnswerMessage() {
-		console.log('Sending a video answer');
+		console.log(`Sending a video answer (sessionId = ${sessionId}, description = %o)`, peerConnection.localDescription);
 
 		await sendMessage({
 			type: 'video-answer',
@@ -515,7 +517,7 @@
 
 	// Handle a video answer message
 	async function handleVideoAnswerMessage(msg) {
-		console.log('Got a video answer');
+		console.log(`Got a video answer (sessionId = ${msg.sessionId}, description = %o)`, msg.description);
 
 		if (peerConnection === null) {
 			console.warn('Got a video answer without an ongoing call');
@@ -534,7 +536,7 @@
 
 	// Send a new ice candidate message
 	async function sendNewICECandidateMessage(candidate) {
-		console.log('Sending a new ice candidate');
+		console.log(`Sending a new ice candidate (sessionId = ${sessionId}, candidate = %o)`, candidate);
 
 		await sendMessage({
 			type: 'new-ice-candidate',
@@ -545,7 +547,7 @@
 
 	// Handle a new ice candidate message
 	async function handleNewICECandidateMessage(msg) {
-		console.log('Got a new ice candidate');
+		console.log(`Got a new ice candidate (sessionId = ${msg.sessionId}, candidate = %o)`, msg.candidate);
 
 		if (peerConnection === null) {
 			console.warn('Got a new ice candidate without an ongoing call');
@@ -569,7 +571,7 @@
 
 	// Send a call hangup message
 	async function sendCallHangupMessage() {
-		console.log('Sending a call hangup');
+		console.log(`Sending a call hangup (sessionId = ${sessionId})`);
 
 		await sendMessage({
 			type: 'call-hangup',
@@ -579,7 +581,7 @@
 
 	// Handle a call hangup message
 	async function handleCallHangupMessage(msg) {
-		console.log('Got a call hangup');
+		console.log(`Got a call hangup (sessionId = ${msg.sessionId})`);
 
 		if (peerConnection === null) {
 			console.warn('Got a call hangup without an ongoing call');
@@ -800,7 +802,7 @@
 
 	// Handle icecandidate event
 	async function handleICECandidateEvent(event) {
-		console.log('Got an icecandidate event');
+		console.log('Got an icecandidate event (candidate = %o)', event.candidate);
 
 		// Send new ice candidate (if there is one)
 		if (event.candidate) {
@@ -810,7 +812,7 @@
 
 	// Handle track event
 	async function handleTrackEvent(event) {
-		console.log('Got a track event');
+		console.log('Got a track event (stream = %o)', event.streams[0]);
 
 		// Set remote video stream
 		setRemoteStream(event.streams[0]);
