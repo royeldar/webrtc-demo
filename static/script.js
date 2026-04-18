@@ -468,6 +468,8 @@
 		});
 	}
 
+	let ignoreOffer = false;
+
 	// Handle a video offer message
 	async function handleVideoOfferMessage(msg) {
 		console.log('Got a video offer');
@@ -477,6 +479,13 @@
 		} else if (msg.sessionId !== sessionId) {
 			console.warn('Incorrect session id');
 		} else {
+			const readyForOffer = !makingOffer && peerConnection.signalingState === 'stable';
+			const polite = side === 'caller';
+			ignoreOffer = !polite && !readyForOffer;
+			if (ignoreOffer) {
+				console.log('Ignoring video offer');
+				return;
+			}
 			await peerConnection.setRemoteDescription(msg.description);
 			for (const candidate of iceCandidatesQueue) {
 				await peerConnection.addIceCandidate(candidate).catch(console.error);
@@ -542,7 +551,13 @@
 			console.log('Got a new ice candidate before video offer/answer');
 			iceCandidatesQueue.push(msg.candidate);
 		} else {
-			await peerConnection.addIceCandidate(msg.candidate);
+			try {
+				await peerConnection.addIceCandidate(msg.candidate);
+			} catch (e) {
+				if (!ignoreOffer) {
+					console.error(e);
+				}
+			}
 		}
 	}
 
@@ -740,13 +755,22 @@
 		attachedStream = null;
 	}
 
+	let makingOffer = false;
+
 	// Handle negotiationneeded event
 	async function handleNegotiationNeededEvent(event) {
 		console.log('Got a negotiationneeded event');
 
-		const offer = await peerConnection.createOffer();
-		await peerConnection.setLocalDescription(offer);
-		await sendVideoOfferMessage();
+		try {
+			makingOffer = true;
+			const offer = await peerConnection.createOffer();
+			await peerConnection.setLocalDescription(offer);
+			await sendVideoOfferMessage();
+		} catch (e) {
+			console.error(e);
+		} finally {
+			makingOffer = false;
+		}
 	}
 
 	// Handle icecandidate event
