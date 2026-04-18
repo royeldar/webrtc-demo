@@ -123,7 +123,7 @@ def run(address, port, server_class=ThreadingHTTPServer, handler_class=MyHTTPReq
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--address', default='localhost')
-    parser.add_argument('--port', type=int, default=80)
+    parser.add_argument('--port', type=int, default=8080)
     args = parser.parse_args()
     run(address=args.address, port=args.port)
 

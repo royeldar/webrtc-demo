@@ -2,7 +2,7 @@
 
 : "${IP_ADDRESS:=localhost}"
 
-: "${PY_PORT:=80}"
+: "${PY_PORT:=8080}"
 
 : "${TURN_PORT:=3478}"
 : "${TURN_REALM:=localhost}"
