@@ -8,6 +8,8 @@ from io import BytesIO
 from collections import defaultdict
 import argparse
 import socket
+import ssl
+import os
 
 usernames = {}
 lock = Lock()
@@ -118,20 +120,28 @@ class DualStackServer(ThreadingHTTPServer):
         super().server_bind()
 
 
-def run(port):
+def run(port, certfile, keyfile, password):
     server_address = ('::', port)
     httpd = DualStackServer(server_address, MyHTTPRequestHandler)
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.load_cert_chain(certfile=certfile, keyfile=keyfile, password=password)
+    httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         print('\nKeyboard interrupt received, exiting.')
+    finally:
+        httpd.server_close()
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=8080)
+    parser.add_argument('--port', type=int, default=8443)
+    parser.add_argument('--certfile', default='cert.pem')
+    parser.add_argument('--keyfile', default='key.pem')
     args = parser.parse_args()
-    run(port=args.port)
+    password = os.getenv('SSL_PASSWORD')
+    run(port=args.port, certfile=args.certfile, keyfile=args.keyfile, password=password)
 
 
 if __name__ == '__main__':
