@@ -118,9 +118,9 @@ class DualStackServer(ThreadingHTTPServer):
         super().server_bind()
 
 
-def run(port, server_class=DualStackServer, handler_class=MyHTTPRequestHandler):
+def run(port):
     server_address = ('::', port)
-    httpd = server_class(server_address, handler_class)
+    httpd = DualStackServer(server_address, MyHTTPRequestHandler)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
