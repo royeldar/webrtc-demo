@@ -677,6 +677,11 @@
 			initiateCallButton.disabled = true;
 			receiveCallButton.disabled = true;
 			endCallButton.disabled = false;
+			stunPortInput.disabled = true;
+			turnPortInput.disabled = true;
+			useTlsCheckbox.disabled = true;
+			turnUsernameInput.disabled = true;
+			turnPasswordInput.disabled = true;
 
 			// Set call status accordingly
 			setCallStatus('WAITING');
@@ -727,11 +732,16 @@
 		initiateCallButton.disabled = false;
 		receiveCallButton.disabled = false;
 		endCallButton.disabled = true;
+		stunPortInput.disabled = false;
+		turnPortInput.disabled = false;
+		useTlsCheckbox.disabled = false;
+		turnUsernameInput.disabled = false;
+		turnPasswordInput.disabled = false;
 	});
 
-	const useTlsCheckbox = document.querySelector('input#useTls');
 	const stunPortInput = document.querySelector('input#stunPort');
 	const turnPortInput = document.querySelector('input#turnPort');
+	const useTlsCheckbox = document.querySelector('input#useTls');
 	useTlsCheckbox.addEventListener('change', (event) => {
 		if (useTlsCheckbox.checked) {
 			turnPortInput.value = "5349";
@@ -741,6 +751,9 @@
 			turnPortInput.placeholder = "3478";
 		}
 	});
+
+	const turnUsernameInput = document.querySelector('input#turnUsername');
+	const turnPasswordInput = document.querySelector('input#turnPassword');
 
 	let peerConnection = null;
 	let iceCandidatesQueue = null;
@@ -762,8 +775,8 @@
 			turnPort =  turnPort || '3478';
 			turnProtocol = 'turn';
 		}
-		const turnUsername = document.querySelector('input#turnUsername').value || 'username';
-		const turnPassword = document.querySelector('input#turnPassword').value || 'password';
+		const turnUsername = turnUsernameInput.value || 'username';
+		const turnPassword = turnPasswordInput.value || 'password';
 		const config = {
 			iceServers: [
 				{
