@@ -740,7 +740,7 @@
 		attachedStream = false;
 
 		const stunPort = document.getElementById('stunPort').value || '3478';
-		const turnPort = document.getElementById('turnPort').value || '3478';
+		const turnsPort = document.getElementById('turnsPort').value || '5349';
 		const turnUsername = document.getElementById('turnUsername').value || 'username';
 		const turnPassword = document.getElementById('turnPassword').value || 'password';
 		const config = {
@@ -749,7 +749,7 @@
 					urls: 'stun:' + window.location.hostname + ':' + stunPort,
 				},
 				{
-					urls: 'turn:' + window.location.hostname + ':' + turnPort,
+					urls: 'turns:' + window.location.hostname + ':' + turnsPort,
 					username: turnUsername,
 					credential: turnPassword,
 				},

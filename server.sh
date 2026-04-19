@@ -3,6 +3,7 @@
 : "${HTTPS_PORT:=8443}"
 : "${SSL_PASSWORD:=}"
 : "${TURN_PORT:=3478}"
+: "${TURN_TLS_PORT:=5349}"
 : "${TURN_MIN_PORT:=49152}"
 : "${TURN_MAX_PORT:=65535}"
 : "${TURN_REALM:=localhost}"
@@ -30,8 +31,12 @@ PY_PID=$!
 turnserver \
     -n --no-cli \
     --listening-port "$TURN_PORT" \
+    --tls-listening-port "$TURN_TLS_PORT" \
     --min-port "$TURN_MIN_PORT" \
     --max-port "$TURN_MAX_PORT" \
+    --cert "$SSL_CERTFILE" \
+    --pkey "$SSL_KEYFILE" \
+    --pkey-pwd "$SSL_PASSWORD" \
     --realm "$TURN_REALM" \
     --user "$TURN_USERNAME:$TURN_PASSWORD" \
     --lt-cred-mech \
