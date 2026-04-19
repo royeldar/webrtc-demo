@@ -729,9 +729,9 @@
 		endCallButton.disabled = true;
 	});
 
-	const useTlsCheckbox = document.getElementById('useTls');
-	const stunPortInput = document.getElementById('stunPort');
-	const turnPortInput = document.getElementById('turnPort');
+	const useTlsCheckbox = document.querySelector('input#useTls');
+	const stunPortInput = document.querySelector('input#stunPort');
+	const turnPortInput = document.querySelector('input#turnPort');
 	useTlsCheckbox.addEventListener('change', () => {
 		if (useTlsCheckbox.checked) {
 			turnPortInput.value = "5349";
@@ -762,8 +762,8 @@
 			turnPort =  turnPort || '3478';
 			turnProtocol = 'turn';
 		}
-		const turnUsername = document.getElementById('turnUsername').value || 'username';
-		const turnPassword = document.getElementById('turnPassword').value || 'password';
+		const turnUsername = document.querySelector('input#turnUsername').value || 'username';
+		const turnPassword = document.querySelector('input#turnPassword').value || 'password';
 		const config = {
 			iceServers: [
 				{
