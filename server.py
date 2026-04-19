@@ -7,6 +7,7 @@ from queue import Queue, Empty
 from io import BytesIO
 from collections import defaultdict
 import argparse
+import socket
 
 usernames = {}
 lock = Lock()
@@ -109,10 +110,16 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
+class DualStackServer(ThreadingHTTPServer):
+    address_family = socket.AF_INET6
 
-def run(address, port, server_class=ThreadingHTTPServer, handler_class=MyHTTPRequestHandler):
-    server_address = (address, port)
-    # TODO listen on ipv6 as well
+    def server_bind(self):
+        self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        super().server_bind()
+
+
+def run(port, server_class=DualStackServer, handler_class=MyHTTPRequestHandler):
+    server_address = ('::', port)
     httpd = server_class(server_address, handler_class)
     try:
         httpd.serve_forever()
@@ -122,10 +129,9 @@ def run(address, port, server_class=ThreadingHTTPServer, handler_class=MyHTTPReq
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--address', default='localhost')
     parser.add_argument('--port', type=int, default=8080)
     args = parser.parse_args()
-    run(address=args.address, port=args.port)
+    run(port=args.port)
 
 
 if __name__ == '__main__':

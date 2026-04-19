@@ -1,7 +1,5 @@
 #!/bin/bash
 
-: "${IP_ADDRESS:=localhost}"
-
 : "${PY_PORT:=8080}"
 
 : "${TURN_PORT:=3478}"
@@ -23,12 +21,11 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
-python3 server.py --address "$IP_ADDRESS" --port "$PY_PORT" &
+python3 server.py --port "$PY_PORT" &
 PY_PID=$!
 
 turnserver \
     -n \
-    --listening-ip "$IP_ADDRESS" \
     --listening-port "$TURN_PORT" \
     --min-port "$TURN_MIN_PORT" \
     --max-port "$TURN_MAX_PORT" \
