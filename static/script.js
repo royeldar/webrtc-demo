@@ -729,6 +729,19 @@
 		endCallButton.disabled = true;
 	});
 
+	const useTlsCheckbox = document.getElementById('useTls');
+	const stunPortInput = document.getElementById('stunPort');
+	const turnPortInput = document.getElementById('turnPort');
+	useTlsCheckbox.addEventListener('change', () => {
+		if (useTlsCheckbox.checked) {
+			turnPortInput.value = "5349";
+			turnPortInput.placeholder = "5349";
+		} else {
+			turnPortInput.value = "3478";
+			turnPortInput.placeholder = "3478";
+		}
+	});
+
 	let peerConnection = null;
 	let iceCandidatesQueue = null;
 	let isRemoteDescriptionSet = null;
@@ -739,8 +752,16 @@
 
 		attachedStream = false;
 
-		const stunPort = document.getElementById('stunPort').value || '3478';
-		const turnsPort = document.getElementById('turnsPort').value || '5349';
+		const stunPort = stunPortInput.value || '3478';
+		let turnPort = turnPortInput.value;
+		let turnProtocol;
+		if (useTlsCheckbox.checked) {
+			turnPort = turnPort || '5349';
+			turnProtocol = 'turns';
+		} else {
+			turnPort =  turnPort || '3478';
+			turnProtocol = 'turn';
+		}
 		const turnUsername = document.getElementById('turnUsername').value || 'username';
 		const turnPassword = document.getElementById('turnPassword').value || 'password';
 		const config = {
@@ -749,7 +770,7 @@
 					urls: 'stun:' + window.location.hostname + ':' + stunPort,
 				},
 				{
-					urls: 'turns:' + window.location.hostname + ':' + turnsPort,
+					urls: turnProtocol + ':' + window.location.hostname + ':' + turnPort,
 					username: turnUsername,
 					credential: turnPassword,
 				},
