@@ -149,7 +149,7 @@
 
 	// Define a button for setting the username
 	const setUsernameButton = document.querySelector('button#setUsername');
-	setUsernameButton.addEventListener('click', async (event) => {
+	setUsernameButton.addEventListener('click', (event) => {
 		const username = getLocalUsername();
 		if (username === '') {
 			alert('Username is empty');
@@ -732,7 +732,7 @@
 	const useTlsCheckbox = document.querySelector('input#useTls');
 	const stunPortInput = document.querySelector('input#stunPort');
 	const turnPortInput = document.querySelector('input#turnPort');
-	useTlsCheckbox.addEventListener('change', () => {
+	useTlsCheckbox.addEventListener('change', (event) => {
 		if (useTlsCheckbox.checked) {
 			turnPortInput.value = "5349";
 			turnPortInput.placeholder = "5349";
