@@ -25,7 +25,7 @@ python3 server.py --port "$PY_PORT" &
 PY_PID=$!
 
 turnserver \
-    -n \
+    -n --no-cli \
     --listening-port "$TURN_PORT" \
     --min-port "$TURN_MIN_PORT" \
     --max-port "$TURN_MAX_PORT" \
@@ -33,6 +33,8 @@ turnserver \
     --user "$TURN_USERNAME:$TURN_PASSWORD" \
     --lt-cred-mech \
     --db "$TURN_DB" \
+    --no-stdout-log \
+    --simple-log \
     --log-file "$TURN_LOGFILE" \
     --pidfile "$TURN_PIDFILE" \
     $TURN_EXTRA_FLAGS &
