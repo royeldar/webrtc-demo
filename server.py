@@ -39,7 +39,7 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
         if self.path == '/api/register':
             try:
                 username, password, secret = self.rfile.read(length).split(b'\n')
-            except:
+            except ValueError:
                 self.send_error(HTTPStatus.BAD_REQUEST, 'Request is invalid')
                 return
             username = username.strip()
@@ -59,7 +59,7 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
         elif self.path == '/api/unregister':
             try:
                 username, password = self.rfile.read(length).split(b'\n')
-            except:
+            except ValueError:
                 self.send_error(HTTPStatus.BAD_REQUEST, 'Request is invalid')
                 return
             username = username.strip()
@@ -107,7 +107,7 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
         elif self.path == '/api/receive':
             try:
                 receiver, receiver_password, sender = self.rfile.read(length).split(b'\n')
-            except:
+            except ValueError:
                 self.send_error(HTTPStatus.BAD_REQUEST, 'Request is invalid')
                 return
             receiver = receiver.strip()
