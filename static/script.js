@@ -57,6 +57,9 @@
 
 	// Open a stream with a specific camera and microphone
 	async function openStream(cameraId, microphoneId) {
+		if (cameraId === '' && microphoneId === '') {
+			return new MediaStream();
+		}
 		let constraints = new Object();
 		if (cameraId !== '') {
 			constraints.video = {
@@ -77,19 +80,16 @@
 
 	let cameraId = null;
 	let microphoneId = null;
-	let localStream = null;
+	let localStream = new MediaStream();
 	let attachedStream = null;
 
-	// Attach the local stream to the connection (this may trigger negotiation)
+	// Attach the local stream to the connection
 	function attachStream() {
-		// Remove the old tracks from the connection (if there are any)
-		if (attachedStream) {
-			peerConnection.getSenders()
-				.forEach((sender) => peerConnection.removeTrack(sender));
-		}
-		// Add the local stream tracks to the connection
-		localStream.getTracks()
-			.forEach((track) => peerConnection.addTrack(track, localStream));
+		// Replace the video and audio tracks accordingly
+		const videoTrack = localStream.getVideoTracks()[0] || null;
+		const audioTrack = localStream.getAudioTracks()[0] || null;
+		peerConnection.getTransceivers()[0].sender.replaceTrack(videoTrack);
+		peerConnection.getTransceivers()[1].sender.replaceTrack(audioTrack);
 		attachedStream = true;
 	}
 
@@ -131,15 +131,6 @@
 		const newMicrophoneId = document.querySelector('select#availableMicrophones').value;
 		await setInputDevices(newCameraId, newMicrophoneId);
 	});
-
-	// Change remote video stream
-	function setRemoteStream(stream) {
-		// Play video from remote camera
-		const remoteVideo = document.querySelector('video#remoteVideo');
-		if (remoteVideo.srcObject !== stream) {
-			remoteVideo.srcObject = stream;
-		}
-	}
 
 	// Get the current local username
 	const localUsernameInput = document.querySelector('input#localUsername');
@@ -426,6 +417,8 @@
 		});
 	}
 
+	const remoteVideo = document.querySelector('video#remoteVideo');
+
 	// Handle a call answer message
 	async function handleCallAnswerMessage(msg) {
 		console.log(`Got a call answer (callerId = ${msg.callerId}, calleeId = ${msg.calleeId})`);
@@ -447,8 +440,15 @@
 			// Set call status accordingly
 			setCallStatus('CONNECTED');
 
+			// Create an empty remote video stream
+			remoteVideo.srcObject = new MediaStream();
+
 			// Create a peer connection
 			createPeerConnection();
+
+			// Create video and audio transceivers (this may trigger negotiation)
+			peerConnection.addTransceiver('video', { direction: 'sendrecv' });
+			peerConnection.addTransceiver('audio', { direction: 'sendrecv' });
 
 			// Send call acknowledgement
 			await sendCallAcknowledgementMessage();
@@ -482,10 +482,17 @@
 			// Set call status accordingly
 			setCallStatus('CONNECTED');
 
+			// Create an empty remote video stream
+			remoteVideo.srcObject = new MediaStream();
+
 			// Create a peer connection
 			createPeerConnection();
 
-			// Attach stream (this will start negotiation)
+			// Create video and audio transceivers (this may trigger negotiation)
+			peerConnection.addTransceiver('video', { direction: 'sendrecv' });
+			peerConnection.addTransceiver('audio', { direction: 'sendrecv' });
+
+			// Attach stream
 			attachStream();
 		}
 	}
@@ -623,7 +630,7 @@
 			destroyPeerConnection();
 
 			// Reset remote video stream
-			setRemoteStream(null);
+			remoteVideo.srcObject = null;
 
 			// There is no session anymore
 			sessionId = null;
@@ -737,7 +744,7 @@
 			destroyPeerConnection();
 
 			// Reset remote video stream
-			setRemoteStream(null);
+			remoteVideo.srcObject = null;
 
 			// Send call hangup to the other user
 			await sendCallHangupMessage();
@@ -878,10 +885,10 @@
 
 	// Handle track event
 	async function handleTrackEvent(event) {
-		console.log('Got a track event (stream = %o)', event.streams[0]);
+		console.log('Got a track event (track = %o)', event.track);
 
-		// Set remote video stream
-		setRemoteStream(event.streams[0]);
+		// Add incoming track to remote video stream
+		remoteVideo.srcObject.addTrack(event.track);
 	}
 
 })();
