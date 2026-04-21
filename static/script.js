@@ -156,6 +156,13 @@
 			});
 			if (response.ok) {
 				alert('SUCCESS! Username registered');
+
+				// Disable and enable some elements
+				localUsernameInput.disabled = true;
+				registerUsernameButton.disabled = true;
+				unregisterUsernameButton.disabled = false;
+				initiateCallButton.disabled = false;
+				receiveCallButton.disabled = false;
 			} else {
 				alert('FAILURE! ' + response.statusText);
 			}
@@ -179,6 +186,13 @@
 			});
 			if (response.ok) {
 				alert('SUCCESS! Username unregistered');
+
+				// Disable and enable some elements
+				localUsernameInput.disabled = false;
+				registerUsernameButton.disabled = false;
+				unregisterUsernameButton.disabled = true;
+				initiateCallButton.disabled = true;
+				receiveCallButton.disabled = true;
 			} else {
 				alert('FAILURE! ' + response.statusText);
 			}
@@ -612,8 +626,6 @@
 			alert('Media sources are not set');
 		} else {
 			// Disable and enable some elements
-			localUsernameInput.disabled = true;
-			registerUsernameButton.disabled = true;
 			unregisterUsernameButton.disabled = true;
 			remoteUsernameInput.disabled = true;
 			initiateCallButton.disabled = true;
@@ -654,8 +666,6 @@
 			alert('Media sources are not set');
 		} else {
 			// Disable and enable some elements
-			localUsernameInput.disabled = true;
-			registerUsernameButton.disabled = true;
 			unregisterUsernameButton.disabled = true;
 			remoteUsernameInput.disabled = true;
 			initiateCallButton.disabled = true;
@@ -708,8 +718,6 @@
 		setCallStatus('DISCONNECTED');
 
 		// Enable and disable some elements
-		localUsernameInput.disabled = false;
-		registerUsernameButton.disabled = false;
 		unregisterUsernameButton.disabled = false;
 		remoteUsernameInput.disabled = false;
 		initiateCallButton.disabled = false;
