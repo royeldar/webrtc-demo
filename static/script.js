@@ -139,19 +139,34 @@
 		return localUsernameInput.value;
 	}
 
+	// Get the current local password
+	const localPasswordInput = document.querySelector('input#localPassword');
+	function getLocalPassword() {
+		return localPasswordInput.value;
+	}
+
+	// Get the current local secret
+	const localSecretInput = document.querySelector('input#localSecret');
+	function getLocalSecret() {
+		return localSecretInput.value;
+	}
+
 	// Define a button for registering the username
 	const registerUsernameButton = document.querySelector('button#registerUsername');
 	registerUsernameButton.addEventListener('click', async (event) => {
 		const username = getLocalUsername();
+		const password = getLocalPassword();
+		const secret = getLocalSecret();
 		if (username === '') {
 			alert('Username is empty');
 		} else {
 			const url = window.location.origin + '/api/register';
 			const headers = new Headers();
 			headers.append('Content-Type', 'text/plain; charset=utf-8');
+			const body = username + '\n' + password + '\n' + secret;
 			const response = await fetch(url, {
 				method: 'POST',
-				body: username,
+				body: body,
 				headers: headers
 			});
 			if (response.ok) {
@@ -159,6 +174,8 @@
 
 				// Disable and enable some elements
 				localUsernameInput.disabled = true;
+				localPasswordInput.disabled = true;
+				localSecretInput.disabled = true;
 				registerUsernameButton.disabled = true;
 				unregisterUsernameButton.disabled = false;
 				initiateCallButton.disabled = false;
@@ -173,15 +190,17 @@
 	const unregisterUsernameButton = document.querySelector('button#unregisterUsername');
 	unregisterUsernameButton.addEventListener('click', async (event) => {
 		const username = getLocalUsername();
+		const password = getLocalPassword();
 		if (username === '') {
 			alert('Username is empty');
 		}  else {
 			const url = window.location.origin + '/api/unregister';
 			const headers = new Headers();
 			headers.append('Content-Type', 'text/plain; charset=utf-8');
+			const body = username + '\n' + password;
 			const response = await fetch(url, {
 				method: 'POST',
-				body: username,
+				body: body,
 				headers: headers
 			});
 			if (response.ok) {
@@ -189,6 +208,8 @@
 
 				// Disable and enable some elements
 				localUsernameInput.disabled = false;
+				localPasswordInput.disabled = false;
+				localSecretInput.disabled = false;
 				registerUsernameButton.disabled = false;
 				unregisterUsernameButton.disabled = true;
 				initiateCallButton.disabled = true;
@@ -205,14 +226,22 @@
 		return remoteUsernameInput.value;
 	}
 
+	// Get the remote secret
+	const remoteSecretInput = document.querySelector('input#remoteSecret');
+	function getRemoteSecret() {
+		return remoteSecretInput.value;
+	}
+
 	// Send a message to the remote user
 	async function sendMessage(msg) {
 		const url = window.location.origin + '/api/send';
 		const headers = new Headers();
 		headers.append('Content-Type', 'text/plain; charset=utf-8');
 		const sender = getLocalUsername();
+		const sender_password = getLocalPassword();
 		const receiver = getRemoteUsername();
-		const body = sender + '\n' + receiver + '\n' + JSON.stringify(msg);
+		const receiver_secret = getRemoteSecret();
+		const body = sender + '\n' + sender_password + '\n' + receiver + '\n' + receiver_secret + '\n' + JSON.stringify(msg);
 		const response = await fetch(url, {
 			method: 'POST',
 			body: body,
@@ -229,8 +258,9 @@
 		const headers = new Headers();
 		headers.append('Content-Type', 'text/plain; charset=utf-8');
 		const receiver = getLocalUsername();
+		const receiver_password = getLocalPassword();
 		const sender = getRemoteUsername();
-		const body = receiver + '\n' + sender;
+		const body = receiver + '\n' + receiver_password + '\n' + sender;
 		const response = await fetch(url, {
 			method: 'POST',
 			body: body,
@@ -628,6 +658,7 @@
 			// Disable and enable some elements
 			unregisterUsernameButton.disabled = true;
 			remoteUsernameInput.disabled = true;
+			remoteSecretInput.disabled = true;
 			initiateCallButton.disabled = true;
 			receiveCallButton.disabled = true;
 			endCallButton.disabled = false;
@@ -668,6 +699,7 @@
 			// Disable and enable some elements
 			unregisterUsernameButton.disabled = true;
 			remoteUsernameInput.disabled = true;
+			remoteSecretInput.disabled = true;
 			initiateCallButton.disabled = true;
 			receiveCallButton.disabled = true;
 			endCallButton.disabled = false;
@@ -720,6 +752,7 @@
 		// Enable and disable some elements
 		unregisterUsernameButton.disabled = false;
 		remoteUsernameInput.disabled = false;
+		remoteSecretInput.disabled = false;
 		initiateCallButton.disabled = false;
 		receiveCallButton.disabled = false;
 		endCallButton.disabled = true;

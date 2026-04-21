@@ -14,6 +14,13 @@ import os
 usernames = {}
 lock = Lock()
 
+
+class Username:
+    def __init__(self, password, secret):
+        self.password = password
+        self.secret = secret
+        self.messages = defaultdict(Queue)
+
 class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory='static', **kwargs)
@@ -30,79 +37,93 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         length = int(self.headers.get('content-length'))
         if self.path == '/api/register':
-            username = self.rfile.read(length).strip()
-            if b'\n' in username:
-                self.send_error(HTTPStatus.BAD_REQUEST, 'Username is invalid')
+            try:
+                username, password, secret = self.rfile.read(length).split(b'\n')
+            except:
+                self.send_error(HTTPStatus.BAD_REQUEST, 'Request is invalid')
                 return
+            username = username.strip()
+            password = password.strip()
+            secret = secret.strip()
             error = False
             with lock:
                 if username in usernames:
                     error = True
                 else:
-                    usernames[username] = defaultdict(Queue)
+                    usernames[username] = Username(password=password, secret=secret)
             if error:
                 self.send_error(HTTPStatus.CONFLICT, 'Username already exists')
             else:
                 self.send_response(HTTPStatus.OK)
                 self.end_headers()
         elif self.path == '/api/unregister':
-            username = self.rfile.read(length).strip()
-            if b'\n' in username:
-                self.send_error(HTTPStatus.BAD_REQUEST, 'Username is invalid')
+            try:
+                username, password = self.rfile.read(length).split(b'\n')
+            except:
+                self.send_error(HTTPStatus.BAD_REQUEST, 'Request is invalid')
                 return
+            username = username.strip()
+            password = password.strip()
             error = False
             with lock:
                 if username not in usernames:
                     error = True
+                elif usernames[username].password != password:
+                    error = True
                 else:
                     del usernames[username]
                     for username2 in usernames:
-                        if username in usernames[username2]:
-                            del usernames[username2][username]
+                        if username in usernames[username2].messages:
+                            del usernames[username2].messages[username]
             if error:
-                self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist')
+                self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist or password is incorrect')
             else:
                 self.send_response(HTTPStatus.OK)
                 self.end_headers()
         elif self.path == '/api/send':
             try:
-                sender, receiver, data = self.rfile.read(length).split(b'\n', 2)
+                sender, sender_password, receiver, receiver_secret, data = self.rfile.read(length).split(b'\n', 4)
             except ValueError:
                 self.send_error(HTTPStatus.BAD_REQUEST, 'Request is invalid')
                 return
             sender = sender.strip()
+            sender_password = sender_password.strip()
             receiver = receiver.strip()
+            receiver_secret = receiver_secret.strip()
             data = data.strip()
             error = False
             with lock:
-                if receiver not in usernames:
+                if sender not in usernames or usernames[sender].password != sender_password:
+                    error = True
+                elif receiver not in usernames or usernames[receiver].secret != receiver_secret:
                     error = True
                 else:
-                    usernames[receiver][sender].put(data)
+                    usernames[receiver].messages[sender].put(data)
             if error:
-                self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist')
+                self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist, password is incorrect or secret is incorrect')
             else:
                 self.send_response(HTTPStatus.OK)
                 self.end_headers()
         elif self.path == '/api/receive':
             try:
-                receiver, sender = self.rfile.read(length).split(b'\n')
+                receiver, receiver_password, sender = self.rfile.read(length).split(b'\n')
             except:
                 self.send_error(HTTPStatus.BAD_REQUEST, 'Request is invalid')
                 return
             receiver = receiver.strip()
+            receiver_password = receiver_password.strip()
             sender = sender.strip()
             error = False
             with lock:
-                if receiver not in usernames:
+                if receiver not in usernames or usernames[receiver].password != receiver_password:
                     error = True
                 else:
                     try:
-                       data = usernames[receiver][sender].get_nowait()
+                       data = usernames[receiver].messages[sender].get_nowait()
                     except Empty:
                         data = None
             if error:
-                self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist')
+                self.send_error(HTTPStatus.NOT_FOUND, 'Username doesn\'t exist or password is incorrect')
             elif data is None:
                 self.send_response(HTTPStatus.NO_CONTENT)
                 self.end_headers()
