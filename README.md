@@ -7,7 +7,7 @@ Suppose Alice wants to call Bob. She should:
 - choose audio and/or video sources, and press "set input devices"
   this causes the client to do the following:
     * set the local stream
-- change her username to "Alice", and press "set username"
+- change her username to "Alice"
 - register her username by pressing "register username"
   this causes the client to do the following:
     * send the server "register" request
@@ -43,7 +43,7 @@ and Bob should:
 - choose audio and/or video sources, and press "set input devices"
   this causes the client to do the following:
     * set the local stream
-- change his username to "Alice", and press "set username"
+- change his username to "Alice"
 - register his username by pressing "register username"
   this causes the client to do the following:
     * send the server "register" request

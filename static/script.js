@@ -133,30 +133,11 @@
 		}
 	}
 
-	let localUsername = null;
-
-	// Change local username
-	function setUsername(username) {
-		console.log(`Username set to ${username}`);
-		localUsername = username;
-	}
-
 	// Get the current local username
 	const localUsernameInput = document.querySelector('input#localUsername');
 	function getLocalUsername() {
 		return localUsernameInput.value;
 	}
-
-	// Define a button for setting the username
-	const setUsernameButton = document.querySelector('button#setUsername');
-	setUsernameButton.addEventListener('click', (event) => {
-		const username = getLocalUsername();
-		if (username === '') {
-			alert('Username is empty');
-		} else {
-			setUsername(username);
-		}
-	})
 
 	// Define a button for registering the username
 	const registerUsernameButton = document.querySelector('button#registerUsername');
@@ -175,7 +156,6 @@
 			});
 			if (response.ok) {
 				alert('SUCCESS! Username registered');
-				setUsername(username);
 			} else {
 				alert('FAILURE! ' + response.statusText);
 			}
@@ -199,7 +179,6 @@
 			});
 			if (response.ok) {
 				alert('SUCCESS! Username unregistered');
-				setUsername(null);
 			} else {
 				alert('FAILURE! ' + response.statusText);
 			}
@@ -217,7 +196,7 @@
 		const url = window.location.origin + '/api/send';
 		const headers = new Headers();
 		headers.append('Content-Type', 'text/plain; charset=utf-8');
-		const sender = localUsername;
+		const sender = getLocalUsername();
 		const receiver = getRemoteUsername();
 		const body = sender + '\n' + receiver + '\n' + JSON.stringify(msg);
 		const response = await fetch(url, {
@@ -235,7 +214,7 @@
 		const url = window.location.origin + '/api/receive';
 		const headers = new Headers();
 		headers.append('Content-Type', 'text/plain; charset=utf-8');
-		const receiver = localUsername;
+		const receiver = getLocalUsername();
 		const sender = getRemoteUsername();
 		const body = receiver + '\n' + sender;
 		const response = await fetch(url, {
@@ -621,8 +600,9 @@
 	// Define a button for initiating a call
 	const initiateCallButton = document.querySelector('button#initiateCall');
 	initiateCallButton.addEventListener('click', async (event) => {
+		const localUsername = getLocalUsername();
 		const remoteUsername = getRemoteUsername();
-		if (localUsername === null || localUsername !== getLocalUsername()) {
+		if (localUsername === '') {
 			alert('Our username is not set');
 		} else if (remoteUsername === '') {
 			alert('Their username is not set');
@@ -633,7 +613,6 @@
 		} else {
 			// Disable and enable some elements
 			localUsernameInput.disabled = true;
-			setUsernameButton.disabled = true;
 			registerUsernameButton.disabled = true;
 			unregisterUsernameButton.disabled = true;
 			remoteUsernameInput.disabled = true;
@@ -663,8 +642,9 @@
 	// Define a button for receiving a call
 	const receiveCallButton = document.querySelector('button#receiveCall');
 	receiveCallButton.addEventListener('click', async (event) => {
+		const localUsername = getLocalUsername();
 		const remoteUsername = getRemoteUsername();
-		if (localUsername === null || localUsername !== getLocalUsername()) {
+		if (localUsername === '') {
 			alert('Our username is not set');
 		} else if (remoteUsername === '') {
 			alert('Their username is not set');
@@ -675,7 +655,6 @@
 		} else {
 			// Disable and enable some elements
 			localUsernameInput.disabled = true;
-			setUsernameButton.disabled = true;
 			registerUsernameButton.disabled = true;
 			unregisterUsernameButton.disabled = true;
 			remoteUsernameInput.disabled = true;
@@ -730,7 +709,6 @@
 
 		// Enable and disable some elements
 		localUsernameInput.disabled = false;
-		setUsernameButton.disabled = false;
 		registerUsernameButton.disabled = false;
 		unregisterUsernameButton.disabled = false;
 		remoteUsernameInput.disabled = false;
