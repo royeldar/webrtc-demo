@@ -35,7 +35,16 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
             self.send_error(HTTPStatus.NOT_FOUND, 'File not found')
 
     def do_POST(self):
-        length = int(self.headers.get('content-length'))
+        content_length = self.headers.get('content-length')
+        if not content_length:
+            self.send_error(HTTPStatus.LENGTH_REQUIRED)
+            return
+
+        length = int(content_length)
+        if length > 65536:
+            self.send_error(HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
+            return
+
         if self.path == '/api/register':
             try:
                 username, password, secret = self.rfile.read(length).split(b'\n')
@@ -117,6 +126,8 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
             with lock:
                 if receiver not in usernames or usernames[receiver].password != receiver_password:
                     error = True
+                elif sender not in usernames:
+                    error = True
                 else:
                     try:
                        data = usernames[receiver].messages[sender].get_nowait()
@@ -147,6 +158,11 @@ class DualStackServer(ThreadingHTTPServer):
     def server_bind(self):
         self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
         super().server_bind()
+
+    def get_request(self):
+        sock, addr = super().get_request()
+        sock.settimeout(10)
+        return sock, addr
 
 
 def run(port, certfile, keyfile, password):
