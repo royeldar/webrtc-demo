@@ -348,7 +348,6 @@
 		console.log('Stopping polling server');
 		isPolling = false;
 		await pollingPromise;
-		await taskQueue;
 		isPolling = null;
 		pollingPromise = null;
 	}
