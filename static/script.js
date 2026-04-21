@@ -95,10 +95,18 @@
 
 	// Change local video stream
 	async function setLocalStream() {
+		// Stop the old tracks (if any)
+		if (localStream !== null) {
+			localStream.getTracks()
+				.forEach((track) => track.stop());
+		}
+		// Reset local video stream
+		localStream = null;
+		const localVideo = document.querySelector('video#localVideo');
+		localVideo.srcObject = null;
 		// Create local video stream
 		localStream = await openStream(cameraId, microphoneId);
 		// Play video from local camera
-		const localVideo = document.querySelector('video#localVideo');
 		localVideo.srcObject = localStream;
 		// If there is an ongoing call, change its media stream
 		if (peerConnection !== null) {
