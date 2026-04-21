@@ -28,8 +28,8 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
             self.send_error(HTTPStatus.NOT_FOUND, 'File not found')
 
     def do_POST(self):
+        length = int(self.headers.get('content-length'))
         if self.path == '/api/register':
-            length = int(self.headers.get('content-length'))
             username = self.rfile.read(length).strip()
             if b'\n' in username:
                 self.send_error(HTTPStatus.BAD_REQUEST, 'Username is invalid')
@@ -46,8 +46,10 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
                 self.send_response(HTTPStatus.OK)
                 self.end_headers()
         elif self.path == '/api/unregister':
-            length = int(self.headers.get('content-length'))
             username = self.rfile.read(length).strip()
+            if b'\n' in username:
+                self.send_error(HTTPStatus.BAD_REQUEST, 'Username is invalid')
+                return
             error = False
             with lock:
                 if username not in usernames:
@@ -63,8 +65,11 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
                 self.send_response(HTTPStatus.OK)
                 self.end_headers()
         elif self.path == '/api/send':
-            length = int(self.headers.get('content-length'))
-            sender, receiver, data = self.rfile.read(length).split(b'\n', 2)
+            try:
+                sender, receiver, data = self.rfile.read(length).split(b'\n', 2)
+            except ValueError:
+                self.send_error(HTTPStatus.BAD_REQUEST, 'Request is invalid')
+                return
             sender = sender.strip()
             receiver = receiver.strip()
             data = data.strip()
@@ -80,8 +85,11 @@ class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
                 self.send_response(HTTPStatus.OK)
                 self.end_headers()
         elif self.path == '/api/receive':
-            length = int(self.headers.get('content-length'))
-            receiver, sender = self.rfile.read(length).split(b'\n')
+            try:
+                receiver, sender = self.rfile.read(length).split(b'\n')
+            except:
+                self.send_error(HTTPStatus.BAD_REQUEST, 'Request is invalid')
+                return
             receiver = receiver.strip()
             sender = sender.strip()
             error = False
