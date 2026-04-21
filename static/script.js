@@ -747,7 +747,7 @@
 			remoteVideo.srcObject = null;
 
 			// Send call hangup to the other user
-			await sendCallHangupMessage();
+			await sendCallHangupMessage().catch(console.error);
 
 			// There is no session anymore
 			sessionId = null;
