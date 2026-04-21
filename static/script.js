@@ -1,5 +1,11 @@
 (async () => {
 
+	let taskQueue = Promise.resolve();
+	function queueTask(taskFn) {
+		taskQueue = taskQueue.then(taskFn).catch(console.error);
+		return taskQueue;
+	}
+
 	// Trigger a permissions request
 	await navigator.mediaDevices.getUserMedia({'video': true, 'audio': true});
 
@@ -48,12 +54,19 @@
 	updateMicrophoneList(audioMicrophones)
 
 	// Listen for changes to media devices and update the lists accordingly
-	navigator.mediaDevices.addEventListener('devicechange', async (event) => {
+	navigator.mediaDevices.addEventListener('devicechange', (event) => {
+		console.log('Got a devicechange event');
+		queueTask(handleDevicechangeEvent);
+	});
+
+	async function handleDevicechangeEvent() {
+		console.log('Handling devicechange event');
+
 		const newCameraList = await getConnectedDevices('videoinput');
 		const newMicrophoneList = await getConnectedDevices('audioinput');
 		updateCameraList(newCameraList);
 		updateMicrophoneList(newMicrophoneList);
-	});
+	}
 
 	// Open a stream with a specific camera and microphone
 	async function openStream(cameraId, microphoneId) {
@@ -126,11 +139,18 @@
 
 	// Define a button for setting the input devices
 	const setInputDevicesButton = document.querySelector('button#setInputDevices');
-	setInputDevicesButton.addEventListener('click', async (event) => {
+	setInputDevicesButton.addEventListener('click', (event) => {
+		console.log('Got a click event for setInputDevices');
+		queueTask(handleSetInputDevicesClickEvent);
+	});
+
+	async function handleSetInputDevicesClickEvent() {
+		console.log('Handling click event for setInputDevices');
+
 		const newCameraId = document.querySelector('select#availableCameras').value;
 		const newMicrophoneId = document.querySelector('select#availableMicrophones').value;
 		await setInputDevices(newCameraId, newMicrophoneId);
-	});
+	}
 
 	// Get the current local username
 	const localUsernameInput = document.querySelector('input#localUsername');
@@ -152,7 +172,14 @@
 
 	// Define a button for registering the username
 	const registerUsernameButton = document.querySelector('button#registerUsername');
-	registerUsernameButton.addEventListener('click', async (event) => {
+	registerUsernameButton.addEventListener('click', (event) => {
+		console.log('Got a click event for registerUsername');
+		queueTask(handleRegisterUsernameClickEvent);
+	});
+
+	async function handleRegisterUsernameClickEvent() {
+		console.log('Handling click event for registerUsername');
+
 		const username = getLocalUsername();
 		const password = getLocalPassword();
 		const secret = getLocalSecret();
@@ -183,11 +210,18 @@
 				alert('FAILURE! ' + response.statusText);
 			}
 		}
-	});
+	}
 
 	// Define a button for unregistering the username
 	const unregisterUsernameButton = document.querySelector('button#unregisterUsername');
-	unregisterUsernameButton.addEventListener('click', async (event) => {
+	unregisterUsernameButton.addEventListener('click', (event) => {
+		console.log('Got a click event for unregisterUsername');
+		queueTask(handleUnregisterUsernameClickEvent);
+	});
+
+	async function handleUnregisterUsernameClickEvent() {
+		console.log('Handling click event for unregisterUsername');
+
 		const username = getLocalUsername();
 		const password = getLocalPassword();
 		if (username === '') {
@@ -217,7 +251,7 @@
 				alert('FAILURE! ' + response.statusText);
 			}
 		}
-	});
+	}
 
 	// Get the remote username
 	const remoteUsernameInput = document.querySelector('input#remoteUsername');
@@ -291,7 +325,7 @@
 			try {
 				let msg;
 				while (isPolling && (msg = await receiveMessage()) !== null) {
-					await handleMessage(msg).catch(console.error);
+					await queueTask(() => handleMessage(msg));
 				}
 			} catch (e) {
 				console.error(e);
@@ -314,6 +348,7 @@
 		console.log('Stopping polling server');
 		isPolling = false;
 		await pollingPromise;
+		await taskQueue;
 		isPolling = null;
 		pollingPromise = null;
 	}
@@ -658,7 +693,14 @@
 
 	// Define a button for initiating a call
 	const initiateCallButton = document.querySelector('button#initiateCall');
-	initiateCallButton.addEventListener('click', async (event) => {
+	initiateCallButton.addEventListener('click', (event) => {
+		console.log('Got a click event for initiateCall');
+		queueTask(handleInitiateCallClickEvent);
+	});
+
+	async function handleInitiateCallClickEvent() {
+		console.log('Handling click event for initiateCall');
+
 		const localUsername = getLocalUsername();
 		const remoteUsername = getRemoteUsername();
 		if (localUsername === '') {
@@ -695,11 +737,18 @@
 			// Send call offer to the other user
 			await sendCallOfferMessage();
 		}
-	});
+	}
 
 	// Define a button for receiving a call
 	const receiveCallButton = document.querySelector('button#receiveCall');
-	receiveCallButton.addEventListener('click', async (event) => {
+	receiveCallButton.addEventListener('click', (event) => {
+		console.log('Got a click event for receiveCall');
+		queueTask(handleReceiveCallClickEvent);
+	});
+
+	async function handleReceiveCallClickEvent() {
+		console.log('Handling click event for receiveCall');
+
 		const localUsername = getLocalUsername();
 		const remoteUsername = getRemoteUsername();
 		if (localUsername === '') {
@@ -733,11 +782,18 @@
 			// Start receiving messages intended for our user
 			startPolling();
 		}
-	});
+	}
 
 	// Define a button for ending a call
 	const endCallButton = document.querySelector('button#endCall');
-	endCallButton.addEventListener('click', async (event) => {
+	endCallButton.addEventListener('click', (event) => {
+		console.log('Got a click event for endCall');
+		queueTask(handleEndCallClickEvent);
+	});
+
+	async function handleEndCallClickEvent() {
+		console.log('Handling click event for endCall')
+
 		// If there is an ongoing call, destroy the peer connection and send hangup
 		if (peerConnection !== null) {
 			// Destroy the peer connection
@@ -776,7 +832,7 @@
 		useTlsCheckbox.disabled = false;
 		turnUsernameInput.disabled = false;
 		turnPasswordInput.disabled = false;
-	});
+	}
 
 	const stunPortInput = document.querySelector('input#stunPort');
 	const turnPortInput = document.querySelector('input#turnPort');
@@ -830,9 +886,18 @@
 		}
 		peerConnection = new RTCPeerConnection(config);
 
-		peerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
-		peerConnection.onicecandidate = handleICECandidateEvent;
-		peerConnection.ontrack = handleTrackEvent;
+		peerConnection.onnegotiationneeded = (event) => {
+			console.log('Got a negotiationneeded event');
+			queueTask(handleNegotiationNeededEvent);
+		};
+		peerConnection.onicecandidate = (event) => {
+			console.log('Got an icecandidate event');
+			queueTask(() => handleICECandidateEvent(event.candidate));
+		};
+		peerConnection.ontrack = (event) => {
+			console.log('Got a track event');
+			queueTask(() => handleTrackEvent(event.track));
+		};
 
 		iceCandidatesQueue = [];
 		isRemoteDescriptionSet = false;
@@ -858,8 +923,8 @@
 	let makingOffer = false;
 
 	// Handle negotiationneeded event
-	async function handleNegotiationNeededEvent(event) {
-		console.log('Got a negotiationneeded event');
+	async function handleNegotiationNeededEvent() {
+		console.log('Handling negotiationneeded event');
 
 		try {
 			makingOffer = true;
@@ -874,21 +939,21 @@
 	}
 
 	// Handle icecandidate event
-	async function handleICECandidateEvent(event) {
-		console.log('Got an icecandidate event (candidate = %o)', event.candidate);
+	async function handleICECandidateEvent(candidate) {
+		console.log('Handling icecandidate event (candidate = %o)', candidate);
 
 		// Send new ice candidate (if there is one)
-		if (event.candidate) {
-			await sendNewICECandidateMessage(event.candidate);
+		if (candidate) {
+			await sendNewICECandidateMessage(candidate);
 		}
 	}
 
 	// Handle track event
-	async function handleTrackEvent(event) {
-		console.log('Got a track event (track = %o)', event.track);
+	async function handleTrackEvent(track) {
+		console.log('Handling track event (track = %o)', track);
 
 		// Add incoming track to remote video stream
-		remoteVideo.srcObject.addTrack(event.track);
+		remoteVideo.srcObject.addTrack(track);
 	}
 
 })();
