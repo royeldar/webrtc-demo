@@ -285,9 +285,11 @@
 		}
 	}
 
-	// Receive a message intended for the local user
-	async function receiveMessage() {
-		const url = window.location.origin + '/api/receive';
+	let eventSource = null;
+	let token = null;
+
+	async function getToken() {
+		const url = window.location.origin + '/api/token/new';
 		const headers = new Headers();
 		headers.append('Content-Type', 'text/plain; charset=utf-8');
 		const receiver = getLocalUsername();
@@ -300,56 +302,55 @@
 			headers: headers
 		});
 		if (!response.ok) {
-			throw new Error('Failed to receive message!');
+			throw new Error('Failed to get token!');
 		}
-		const msg = await response.text();
-		if (msg === '') {
-			return null;
+		token = await response.text();
+		return token;
+	}
+
+	async function deleteToken() {
+		const url = window.location.origin + '/api/token/delete';
+		const headers = new Headers();
+		headers.append('Content-Type', 'text/plain; charset=utf-8');
+		const response = await fetch(url, {
+			method: 'POST',
+			body: token,
+			headers: headers
+		});
+		if (!response.ok) {
+			throw new Error('Failed to delete token!');
 		}
-		return JSON.parse(msg);
+		token = null;
 	}
 
-	// 100ms
-	const pollingInterval = 100;
-	let isPolling = null;
-	let pollingPromise = null;
+	// Start receiving messages from server
+	async function startReceivingMessages() {
+		console.log('Starting to receive messages from server');
 
-	// Delay some amount of time
-	async function delay(ms) {
-		return new Promise(resolve => setTimeout(resolve, ms));
+		const token = await getToken();
+		const url = window.location.origin + '/api/receive/' + token;
+
+		eventSource = new EventSource(url);
+
+		eventSource.onopen = (event) => console.log(`A connection to ${url} has been established`);
+		eventSource.onerror = (event) => console.log(`An error occurred while attempting to connect to ${url}`);
+		eventSource.onmessage = (event) => {
+			console.log(`Got a message from ${url}`);
+			const msg = JSON.parse(event.data);
+			queueTask(() => handleMessage(msg));
+		};
 	}
 
-	// Handle messages by polling the server indefinitely
-	async function pollServer() {
-		while (isPolling) {
-			try {
-				let msg;
-				while (isPolling && (msg = await receiveMessage()) !== null) {
-					await queueTask(() => handleMessage(msg));
-				}
-			} catch (e) {
-				console.error(e);
-			}
-			if (isPolling) {
-				await delay(pollingInterval);
-			}
+	// Stop receiving messages from server
+	async function stopReceivingMessages() {
+		console.log('Stopping receiving messages from server');
+
+		if (eventSource !== null) {
+			eventSource.close();
+			eventSource = null;
 		}
-	}
 
-	// Start polling server
-	function startPolling() {
-		console.log('Starting to poll server');
-		isPolling = true;
-		pollingPromise = pollServer();
-	}
-
-	// Stop polling server
-	async function stopPolling() {
-		console.log('Stopping polling server');
-		isPolling = false;
-		await pollingPromise;
-		isPolling = null;
-		pollingPromise = null;
+		await deleteToken().catch(console.error);
 	}
 
 	// Handle a single message that was received
@@ -731,7 +732,7 @@
 			side = 'caller';
 
 			// Start receiving messages intended for our user
-			startPolling();
+			await startReceivingMessages();
 
 			// Send call offer to the other user
 			await sendCallOfferMessage();
@@ -779,7 +780,7 @@
 			side = 'callee';
 
 			// Start receiving messages intended for our user
-			startPolling();
+			await startReceivingMessages();
 		}
 	}
 
@@ -809,7 +810,7 @@
 		}
 
 		// Stop receiving messages intended for our user
-		await stopPolling();
+		await stopReceivingMessages();
 
 		// There is no side anymore
 		side = null;
