@@ -1,0 +1,36 @@
+services:
+  webrtc-app:
+    build: .
+    container_name: webrtc-service
+    ports:
+      - "${HOST_IP}:${HTTPS_PORT}:8443"
+      - "${HOST_IP}:${TURN_PORT}:3478/tcp"
+      - "${HOST_IP}:${TURN_PORT}:3478/udp"
+      - "${HOST_IP}:${TURN_TLS_PORT}:5349/tcp"
+      - "${HOST_IP}:${TURN_TLS_PORT}:5349/udp"
+      - "${HOST_IP}:${TURN_MIN_PORT}-${TURN_MAX_PORT}:${TURN_MIN_PORT}-${TURN_MAX_PORT}/tcp"
+      - "${HOST_IP}:${TURN_MIN_PORT}-${TURN_MAX_PORT}:${TURN_MIN_PORT}-${TURN_MAX_PORT}/udp"
+    environment:
+      # - HTTPS_PORT=8443
+      # - TURN_PORT=3478
+      # - TURN_TLS_PORT=5349
+      - "TURN_MIN_PORT=${TURN_MIN_PORT}"
+      - "TURN_MAX_PORT=${TURN_MAX_PORT}"
+      - "TURN_EXTRA_FLAGS=--external-ip ${HOST_IP}"
+      - "TURN_REALM=${TURN_REALM}"
+      - "TURN_USERNAME=${TURN_USERNAME}"
+      - "TURN_PASSWORD=${TURN_PASSWORD}"
+      - "SSL_PASSWORD=${SSL_PASSWORD}"
+    volumes:
+      - type: bind
+        source: ${SSL_CERTFILE}
+        target: /app/cert.pem
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${SSL_KEYFILE}
+        target: /app/key.pem
+        read_only: true
+        bind:
+          create_host_path: false
