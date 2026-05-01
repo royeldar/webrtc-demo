@@ -4,3 +4,4 @@ key.pem
 turnserver.db
 turnserver.log
 turnserver.pid
+turnsrv/turnsrv
