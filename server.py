@@ -243,9 +243,10 @@ class DualStackServer(ThreadingHTTPServer):
 def run(port, certfile, keyfile, password):
     server_address = ('::', port)
     httpd = DualStackServer(server_address, MyHTTPRequestHandler)
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    context.load_cert_chain(certfile=certfile, keyfile=keyfile, password=password)
-    httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
+    if certfile:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(certfile=certfile, keyfile=keyfile, password=password)
+        httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
@@ -256,9 +257,9 @@ def run(port, certfile, keyfile, password):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=8443)
-    parser.add_argument('--certfile', default='cert.pem')
-    parser.add_argument('--keyfile', default='key.pem')
+    parser.add_argument('--port', type=int, default=8080)
+    parser.add_argument('--certfile', default=None)
+    parser.add_argument('--keyfile', default=None)
     args = parser.parse_args()
     password = os.getenv('SSL_PASSWORD')
     run(port=args.port, certfile=args.certfile, keyfile=args.keyfile, password=password)

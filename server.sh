@@ -1,11 +1,11 @@
 #!/bin/bash
 
-: "${HTTPS_PORT:=8443}"
+: "${HTTP_PORT:=8080}"
 : "${SSL_PASSWORD:=}"
 : "${TURN_PORT:=3478}"
 : "${TURN_TLS_PORT:=5349}"
-: "${TURN_MIN_PORT:=49152}"
-: "${TURN_MAX_PORT:=65535}"
+: "${TURN_MIN_PORT:=50000}"
+: "${TURN_MAX_PORT:=50001}"
 : "${TURN_REALM:=localhost}"
 : "${TURN_USERNAME:=username}"
 : "${TURN_PASSWORD:=password}"
@@ -25,7 +25,7 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 export SSL_PASSWORD
-python3 server.py --port "$HTTPS_PORT" --certfile "$SSL_CERTFILE" --keyfile "$SSL_KEYFILE" &
+python3 server.py --port "$HTTP_PORT" &
 PY_PID=$!
 
 turnserver \
