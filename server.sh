@@ -18,10 +18,13 @@ trap cleanup SIGINT SIGTERM
 python3 server.py --port "$HTTP_PORT" &
 PY_PID=$!
 
-LISTEN_PORT="$TURN_PORT" RELAY_PORT="$RELAY_PORT" \
-EXTERNAL_IP="$EXTERNAL_IP" \
-TURN_REALM="$TURN_REALM" TURN_USERNAME="$TURN_USERNAME" TURN_PASSWORD="$TURN_PASSWORD" \
-    ./turnsrv &
+python3 turnsrv.py \
+    --listen-port "$TURN_PORT" \
+    --relay-port "$RELAY_PORT" \
+    --external-ip "$EXTERNAL_IP" \
+    --realm "$TURN_REALM" \
+    --username "$TURN_USERNAME" \
+    --password "$TURN_PASSWORD" &
 TURN_PID=$!
 
 wait
