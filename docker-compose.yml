@@ -3,34 +3,15 @@ services:
     build: .
     container_name: webrtc-service
     ports:
-      - "${HOST_IP}:${HTTPS_PORT}:8443"
+      - "${HOST_IP}:${HTTP_PORT}:8080/tcp"
       - "${HOST_IP}:${TURN_PORT}:3478/tcp"
-      - "${HOST_IP}:${TURN_PORT}:3478/udp"
-      - "${HOST_IP}:${TURN_TLS_PORT}:5349/tcp"
-      - "${HOST_IP}:${TURN_TLS_PORT}:5349/udp"
-      - "${HOST_IP}:${TURN_MIN_PORT}-${TURN_MAX_PORT}:${TURN_MIN_PORT}-${TURN_MAX_PORT}/tcp"
-      - "${HOST_IP}:${TURN_MIN_PORT}-${TURN_MAX_PORT}:${TURN_MIN_PORT}-${TURN_MAX_PORT}/udp"
+      - "0.0.0.0:${TURN_PORT}:3478/udp"
+      - "0.0.0.0:${RELAY_PORT}:50000/udp"
     environment:
-      # - HTTPS_PORT=8443
-      # - TURN_PORT=3478
-      # - TURN_TLS_PORT=5349
-      - "TURN_MIN_PORT=${TURN_MIN_PORT}"
-      - "TURN_MAX_PORT=${TURN_MAX_PORT}"
-      - "TURN_EXTRA_FLAGS=--external-ip ${HOST_IP}"
+      - "HTTP_PORT=8080"
+      - "TURN_PORT=3478"
+      - "RELAY_PORT=50000"
+      - "EXTERNAL_IP=${EXTERNAL_IP}"
       - "TURN_REALM=${TURN_REALM}"
       - "TURN_USERNAME=${TURN_USERNAME}"
       - "TURN_PASSWORD=${TURN_PASSWORD}"
-      - "SSL_PASSWORD=${SSL_PASSWORD}"
-    volumes:
-      - type: bind
-        source: ${SSL_CERTFILE}
-        target: /app/cert.pem
-        read_only: true
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ${SSL_KEYFILE}
-        target: /app/key.pem
-        read_only: true
-        bind:
-          create_host_path: false
